@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cricket Clash World Cup</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#040b18;color:#fff;font-family:Arial,sans-serif;overflow-x:hidden}
+button{font:inherit;cursor:pointer}.hide{display:none!important}
+
+.screen{
+  min-height:100vh;display:grid;place-items:center;padding:24px;
+  background:radial-gradient(circle at top,#1b5794,#040b18 68%);
+}
+.panel{
+  width:min(920px,100%);padding:38px 25px;text-align:center;border:2px solid #39d9ff;
+  border-radius:28px;background:#071936ed;box-shadow:0 0 65px #009dff77;
+}
+h1{margin:0;color:#4eeaff;font-size:clamp(2.3rem,6vw,5rem);text-shadow:0 0 22px #00b7ff}
+h2{margin:10px 0 26px;color:#ffd94b}p{color:#c0dbf7;line-height:1.6}
+.small-title{margin:25px 0 12px;color:#5ce7ff;font-weight:bold;letter-spacing:1px}
+
+.team-grid,.overs,.choices{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
+.team,.over,.choice{
+  min-width:158px;padding:16px;border-radius:17px;border:2px solid #326a9b;
+  color:#fff;background:#0c2348;font-weight:bold;transition:.2s;
+}
+.team:hover,.over:hover,.choice:hover{transform:translateY(-4px);border-color:#5beaff}
+.team.selected,.over.selected{border-color:#ffd84b;background:#174170;box-shadow:0 0 20px #ffd84b77}
+.flag{display:block;font-size:2rem;margin-bottom:8px}
+.primary{
+  margin-top:30px;padding:16px 45px;border:0;border-radius:15px;color:#03223c;
+  background:linear-gradient(90deg,#28adff,#42f1ca);font-size:1.2rem;font-weight:bold;
+  box-shadow:0 8px 28px #00b7ff77;
+}
+
+#coin{
+  width:155px;height:155px;margin:25px auto;border:7px solid #fff0a0;border-radius:50%;
+  display:grid;place-items:center;color:#633700;font-size:1.35rem;font-weight:bold;
+  background:radial-gradient(circle at 34% 30%,#fffad0,#ffc32d 50%,#b66300);
+  box-shadow:0 0 28px #ffcc36aa;transition:transform 1s;
+}
+#tossText{min-height:34px;color:#c6edff;font-size:1.1rem}
+
+#game{min-height:100vh;padding:12px;background:linear-gradient(#06142c,#071b35)}
+.topbar{
+  width:min(1600px,100%);margin:auto;display:flex;justify-content:center;
+  align-items:stretch;gap:10px;flex-wrap:wrap;
+}
+.card,#matchInfo{
+  min-width:220px;padding:10px 16px;border:1px solid #4087bd;border-radius:14px;background:#0a1d3d;
+}
+.team-name{color:#9cdbff;font-size:.8rem;font-weight:bold}.score{font-size:1.6rem;font-weight:bold}
+#matchInfo{text-align:center}#inningsText{display:block;color:#53eaff;font-weight:bold}
+#overText{font-size:.9rem;color:#d6eaff}
+.top-button{
+  border:1px solid #4dbfe9;border-radius:12px;background:#102d54;color:#fff;
+  padding:10px 15px;font-weight:bold;
+}
+
+.canvas-wrap{
+  position:relative;width:min(1600px,calc(100vw - 24px));aspect-ratio:16/9;
+  margin:12px auto;border:2px solid #2ab7ef;border-radius:24px;
+  overflow:hidden;background:#061a32;box-shadow:0 0 32px #00a2ff66;
+}
+.canvas-wrap canvas{position:absolute;inset:0;width:100%;height:100%}
+#field{touch-action:none}
+#message{
+  position:absolute;z-index:5;top:17px;left:50%;transform:translateX(-50%);
+  padding:10px 22px;border:1px solid #51e8ff;border-radius:99px;
+  background:#04152de8;color:#fff;font-weight:bold;text-align:center;max-width:80%;
+}
+#modal{
+  position:absolute;z-index:10;inset:0;display:grid;place-items:center;background:#020d22da;
+}
+.modal-box{
+  width:min(560px,90%);padding:34px 25px;text-align:center;border:2px solid #4be3ff;
+  border-radius:25px;background:#09224a;box-shadow:0 0 48px #00baff88;
+}
+.modal-box h2{font-size:2rem;margin-top:0}
+.modal-box button{margin:6px;padding:13px 19px;border:0;border-radius:12px;font-weight:bold}
+#modalMain{color:#03233b;background:#43e6ff}
+#modalChange{color:#fff!important;background:#183b68;border:1px solid #62cdf8!important}
+
+#bowlOptions{text-align:center;margin:8px auto 0}
+.style{
+  margin:3px;padding:8px 13px;border:1px solid #568fbd;border-radius:10px;
+  color:#d8f5ff;background:#102b4f;font-size:.9rem;
+}
+.style.selected{background:#2b8dcd;color:#fff;border-color:#70f0ff}
+.controls{text-align:center;color:#c2ddf5;margin:10px}
+.key{
+  display:inline-block;padding:4px 8px;margin:2px;border:1px solid #70a9d1;
+  border-radius:5px;background:#102a4c;color:#fff;
+}
+</style>
+</head>
+<body>
+
+<div id="setup" class="screen">
+  <div class="panel">
+    <h1>CRICKET CLASH</h1>
+    <h2>World Cup Stadium</h2>
+    <p>Choose your team, win the toss, and become the champion.</p>
+
+    <div class="small-title">YOUR TEAM</div>
+    <div class="team-grid">
+      <button class="team selected" data-team="India"><span class="flag">🇮🇳</span>INDIA</button>
+      <button class="team" data-team="Pakistan"><span class="flag">🇵🇰</span>PAKISTAN</button>
+      <button class="team" data-team="Australia"><span class="flag">🇦🇺</span>AUSTRALIA</button>
+      <button class="team" data-team="Sri Lanka"><span class="flag">🇱🇰</span>SRI LANKA</button>
+    </div>
+
+    <div class="small-title">MATCH LENGTH</div>
+    <div class="overs">
+      <button class="over selected" data-overs="2">2 OVERS</button>
+      <button class="over" data-overs="3">3 OVERS</button>
+      <button class="over" data-overs="5">5 OVERS</button>
+    </div>
+
+    <button id="goToss" class="primary">GO TO TOSS 🏏</button>
+  </div>
+</div>
+
+<div id="tossScreen" class="screen hide">
+  <div class="panel">
+    <h1>THE TOSS</h1>
+    <h2 id="tossTeams">INDIA vs PAKISTAN</h2>
+    <div id="coin">TOSS</div>
+    <p id="tossText">Choose Heads or Tails.</p>
+
+    <div id="tossChoices" class="choices">
+      <button id="heads" class="choice">HEADS</button>
+      <button id="tails" class="choice">TAILS</button>
+    </div>
+
+    <div id="batBowlChoices" class="choices hide">
+      <button id="batFirst" class="choice">🏏 BAT FIRST</button>
+      <button id="bowlFirst" class="choice">🎯 BOWL FIRST</button>
+    </div>
+  </div>
+</div>
+
+<div id="game" class="hide">
+  <div class="topbar">
+    <div id="playerCard" class="card">
+      <div id="playerName" class="team-name">🇮🇳 INDIA</div>
+      <div id="playerScore" class="score">0 / 0</div>
+    </div>
+
+    <div id="matchInfo">
+      <span id="inningsText">YOUR BATTING</span>
+      <span id="overText">0.0 overs</span>
+    </div>
+
+    <div id="opponentCard" class="card">
+      <div id="opponentName" class="team-name">🇵🇰 PAKISTAN</div>
+      <div id="opponentScore" class="score">0 / 0</div>
+    </div>
+
+    <button id="soundButton" class="top-button">🔊 SOUND ON</button>
+    <button id="fullscreenButton" class="top-button">⛶ FULL SCREEN</button>
+  </div>
+
+  <div class="canvas-wrap">
+    <canvas id="stadium" width="1600" height="900"></canvas>
+    <canvas id="field" width="1600" height="900"></canvas>
+    <div id="message">Welcome to the stadium!</div>
+
+    <div id="modal" class="hide">
+      <div class="modal-box">
+        <h2 id="modalTitle">INNINGS BREAK</h2>
+        <p id="modalText"></p>
+        <button id="modalMain">START NEXT INNINGS</button>
+        <button id="modalChange">CHANGE TEAMS</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="bowlOptions" class="hide">
+    <button class="style selected" data-style="swing">1 • SWING</button>
+    <button class="style" data-style="yorker">2 • YORKER</button>
+    <button class="style" data-style="bouncer">3 • BOUNCER</button>
+  </div>
+
+  <div class="controls" id="controls">
+    <span class="key">←</span> <span class="key">→</span> move
+    <span class="key">SPACE</span> hit
+  </div>
+</div>
+
+<script>
+const field = document.getElementById("field");
+const ctx = field.getContext("2d");
+const stadium = document.getElementById("stadium");
+const sctx = stadium.getContext("2d");
+const $ = id => document.getElementById(id);
+
+const teams = {
+  India: { short:"IND", flag:"🇮🇳", color:"#ff9c21" },
+  Pakistan: { short:"PAK", flag:"🇵🇰", color:"#34d36d" },
+  Australia: { short:"AUS", flag:"🇦🇺", color:"#ffd52c" },
+  "Sri Lanka": { short:"SL", flag:"🇱🇰", color:"#52aeff" }
+};
+
+let selectedTeam = "India";
+let selectedOvers = 2;
+let playerTeam = "";
+let opponentTeam = "";
+let userBatsFirst = true;
+let innings = 0;
+let target = 0;
+
+let playerRuns = 0;
+let playerWickets = 0;
+let opponentRuns = 0;
+let opponentWickets = 0;
+let ballsThisInnings = 0;
+
+let phase = "setup";
+let ball = null;
+let pending = false;
+let batX = 800;
+let bowlingLine = 800;
+let bowlingStyle = "swing";
+let flashText = "";
+let flashTimer = 0;
+let hasTossed = false;
+let audioOn = true;
+let audioContext = null;
+
+const keys = {};
+
+document.querySelectorAll(".team").forEach(button => {
+  button.onclick = () => {
+    selectedTeam = button.dataset.team;
+    document.querySelectorAll(".team").forEach(b => b.classList.toggle("selected",b === button));
+  };
+});
+
+document.querySelectorAll(".over").forEach(button => {
+  button.onclick = () => {
+    selectedOvers = Number(button.dataset.overs);
+    document.querySelectorAll(".over").forEach(b => b.classList.toggle("selected",b === button));
+  };
+});
+
+document.querySelectorAll(".style").forEach(button => {
+  button.onclick = () => selectStyle(button.dataset.style);
+});
+
+$("goToss").onclick = goToToss;
+$("heads").onclick = () => toss("Heads");
+$("tails").onclick = () => toss("Tails");
+$("batFirst").onclick = () => startMatch(true);
+$("bowlFirst").onclick = () => startMatch(false);
+
+$("soundButton").onclick = () => {
+  audioOn = !audioOn;
+  $("soundButton").textContent = audioOn ? "🔊 SOUND ON" : "🔇 SOUND OFF";
+  if (!audioOn) speechSynthesis.cancel();
+};
+
+$("fullscreenButton").onclick = () => {
+  if (!document.fullscreenElement) $("game").requestFullscreen?.();
+  else document.exitFullscreen?.();
+};
+
+$("modalMain").onclick = () => {
+  if (phase === "break") {
+    innings = 1;
+    ballsThisInnings = 0;
+    $("modal").classList.add("hide");
+    startInning();
+  } else {
+    $("game").classList.add("hide");
+    goToToss();
+  }
+};
+
+$("modalChange").onclick = () => {
+  $("game").classList.add("hide");
+  $("tossScreen").classList.add("hide");
+  $("setup").classList.remove("hide");
+  phase = "setup";
+};
+
+function initAudio() {
+  const AudioAPI = window.AudioContext || window.webkitAudioContext;
+  if (!audioOn || !AudioAPI) return;
+  if (!audioContext) audioContext = new AudioAPI();
+  if (audioContext.state === "suspended") audioContext.resume();
+}
+
+function tone(frequency,duration,type="sine",volume=.07,delay=0) {
+  if (!audioOn) return;
+  initAudio();
+  if (!audioContext) return;
+
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+
+  oscillator.type = type;
+  oscillator.frequency.value = frequency;
+  gain.gain.setValueAtTime(volume,audioContext.currentTime + delay);
+  gain.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime + delay + duration);
+
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+  oscillator.start(audioContext.currentTime + delay);
+  oscillator.stop(audioContext.currentTime + delay + duration);
+}
+
+function cheer(type) {
+  if (type === "six") {
+    tone(240,.18,"sawtooth",.09);
+    tone(380,.25,"sawtooth",.07,.1);
+  } else if (type === "four") {
+    tone(340,.2,"triangle",.09);
+    tone(470,.22,"triangle",.06,.1);
+  } else if (type === "wicket") {
+    tone(160,.35,"square",.10);
+  } else {
+    tone(500,.09,"sine",.05);
+  }
+}
+
+function speak(text) {
+  if (!audioOn || !("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
+  const voice = new SpeechSynthesisUtterance(text);
+  voice.rate = 1.05;
+  voice.volume = .85;
+  setTimeout(() => speechSynthesis.speak(voice),80);
+}
+
+function goToToss() {
+  initAudio();
+  playerTeam = selectedTeam;
+
+  const choices = Object.keys(teams).filter(team => team !== playerTeam);
+  opponentTeam = choices[Math.floor(Math.random() * choices.length)];
+
+  hasTossed = false;
+  $("setup").classList.add("hide");
+  $("game").classList.add("hide");
+  $("tossScreen").classList.remove("hide");
+
+  $("tossTeams").textContent = playerTeam.toUpperCase() + " vs " + opponentTeam.toUpperCase();
+  $("coin").textContent = "TOSS";
+  $("coin").style.transform = "rotateY(0deg)";
+  $("tossText").textContent = "Choose Heads or Tails.";
+  $("tossChoices").classList.remove("hide");
+  $("batBowlChoices").classList.add("hide");
+  phase = "toss";
+}
+
+function toss(choice) {
+  if (hasTossed) return;
+  hasTossed = true;
+
+  $("tossChoices").classList.add("hide");
+  $("coin").style.transform = "rotateY(1440deg)";
+  $("tossText").textContent = "The coin is spinning...";
+  tone(700,.13,"triangle",.1);
+
+  setTimeout(() => {
+    const result = Math.random() < .5 ? "Heads" : "Tails";
+    const userWon = result === choice;
+    $("coin").textContent = result.toUpperCase();
+
+    if (userWon) {
+      $("tossText").textContent = "YOU WON THE TOSS! Choose to bat or bowl.";
+      $("batBowlChoices").classList.remove("hide");
+      speak("You won the toss. Choose to bat or bowl.");
+    } else {
+      const opponentChoice = Math.random() < .5 ? "bat" : "bowl";
+      userBatsFirst = opponentChoice === "bowl";
+      $("tossText").textContent = opponentTeam + " won the toss and chose to " + opponentChoice + " first.";
+      speak(opponentTeam + " won the toss and chose to " + opponentChoice + " first.");
+      setTimeout(() => startMatch(userBatsFirst),1700);
+    }
+  },1000);
+}
+
+function startMatch(playerBatFirst) {
+  userBatsFirst = playerBatFirst;
+  innings = 0;
+  target = 0;
+  playerRuns = 0;
+  playerWickets = 0;
+  opponentRuns = 0;
+  opponentWickets = 0;
+  ballsThisInnings = 0;
+  batX = 800;
+  bowlingLine = 800;
+  ball = null;
+  pending = false;
+
+  $("tossScreen").classList.add("hide");
+  $("game").classList.remove("hide");
+  $("modal").classList.add("hide");
+
+  $("playerName").textContent = teams[playerTeam].flag + " " + teams[playerTeam].short;
+  $("opponentName").textContent = teams[opponentTeam].flag + " " + teams[opponentTeam].short;
+  $("playerCard").style.borderColor = teams[playerTeam].color;
+  $("opponentCard").style.borderColor = teams[opponentTeam].color;
+
+  buildStaticStadium();
+  startInning();
+}
+
+function isUserBatting() {
+  return innings === 0 ? userBatsFirst : !userBatsFirst;
+}
+
+function startInning() {
+  const userBatting = isUserBatting();
+  phase = userBatting ? "bat" : "bowl";
+  ball = null;
+  pending = false;
+
+  $("bowlOptions").classList.toggle("hide",userBatting);
+  $("controls").innerHTML = userBatting
+    ? '<span class="key">←</span> <span class="key">→</span> move on the pitch &nbsp; <span class="key">SPACE</span> hit'
+    : '<span class="key">←</span> <span class="key">→</span> aim on the pitch &nbsp; <span class="key">1</span> swing <span class="key">2</span> yorker <span class="key">3</span> bouncer &nbsp; <span class="key">SPACE</span> bowl';
+
+  updateHUD();
+
+  if (userBatting) {
+    showMessage("You are batting! Watch the ball and hit with SPACE.");
+    setTimeout(newBattingBall,650);
+  } else {
+    showMessage("You are bowling! Aim at the stumps and press SPACE.");
+  }
+}
+
+function newBattingBall() {
+  if (phase !== "bat" || pending) return;
+
+  ball = {
+    type:"incoming",
+    x:800,
+    y:355,
+    startX:800,
+    endX:800 + (Math.random() * 90 - 45),
+    endY:680,
+    curve:Math.random() * 26 - 13,
+    progress:0,
+    speed:1.05
+  };
+
+  showMessage("Ball " + (ballsThisInnings + 1) + " — wait... HIT!");
+}
+
+function bowlBall() {
+  if (phase !== "bowl" || ball || pending) return;
+
+  let curve = 0;
+  let endY = 680;
+  let speed = 1.05;
+
+  if (bowlingStyle === "swing") curve = bowlingLine < 800 ? 22 : -22;
+  if (bowlingStyle === "yorker") { endY = 705; speed = 1.3; }
+  if (bowlingStyle === "bouncer") { endY = 610; speed = .9; }
+
+  ball = {
+    type:"bowling",
+    x:800,
+    y:355,
+    startX:800,
+    endX:bowlingLine,
+    endY,
+    curve,
+    progress:0,
+    speed
+  };
+
+  tone(430,.07,"sine",.05);
+  showMessage(bowlingStyle.toUpperCase() + " DELIVERY!");
+}
+
+function hitBall() {
+  if (phase !== "bat" || !ball || ball.type !== "incoming" || pending) return;
+
+  const timing = Math.abs(ball.y - 652);
+  const position = Math.abs(ball.x - batX);
+
+  if (timing > 82 || position > 76) {
+    showMessage(ball.y < 652 ? "Too early!" : "Too late!");
+    tone(170,.07,"square",.04);
+    return;
+  }
+
+  const timingQuality = Math.max(0,1 - timing / 82);
+  const positionQuality = Math.max(0,1 - position / 76);
+  const quality = (timingQuality + positionQuality) / 2;
+  const luck = Math.random();
+
+  let runs = 0;
+  let wicket = false;
+
+  if (quality < .28) {
+    wicket = Math.random() < .26;
+    runs = wicket ? 0 : (luck < .6 ? 0 : 1);
+  } else if (quality < .52) {
+    runs = luck < .30 ? 0 : luck < .76 ? 1 : 2;
+  } else if (quality < .76) {
+    runs = luck < .22 ? 1 : luck < .66 ? 2 : 4;
+  } else {
+    runs = luck < .20 ? 2 : luck < .63 ? 4 : 6;
+  }
+
+  let shotTarget = 800;
+  if (keys.ArrowLeft) shotTarget = 230;
+  if (keys.ArrowRight) shotTarget = 1370;
+
+  ball = {
+    type:"playerShot",
+    x:ball.x,
+    y:ball.y,
+    vx:(shotTarget - ball.x) * 1.25,
+    vy:-590 - quality * 170,
+    gravity:470,
+    time:0,
+    runs,
+    wicket
+  };
+
+  phase = "playerShot";
+  tone(760,.08,"triangle",.1);
+}
+
+function computerHitBall() {
+  if (!ball || ball.type !== "bowling" || pending) return;
+
+  const lineDistance = Math.abs(bowlingLine - 800);
+  const accurate = lineDistance < 34;
+  let wicketChance = accurate ? .23 : .05;
+
+  if (bowlingStyle === "yorker" && accurate) wicketChance += .12;
+  if (bowlingStyle === "bouncer" && accurate) wicketChance += .05;
+
+  const wicket = Math.random() < wicketChance;
+  const luck = Math.random();
+  let runs;
+
+  if (wicket) runs = 0;
+  else if (accurate) runs = luck < .35 ? 0 : luck < .7 ? 1 : luck < .9 ? 2 : 4;
+  else runs = luck < .14 ? 0 : luck < .38 ? 1 : luck < .58 ? 2 : luck < .82 ? 4 : 6;
+
+  const targetX = 280 + Math.random() * 1040;
+
+  ball = {
+    type:"computerShot",
+    x:ball.x,
+    y:ball.y,
+    vx:(targetX - ball.x) * 1.05,
+    vy:-420 - Math.random() * 150,
+    gravity:470,
+    time:0,
+    runs,
+    wicket
+  };
+
+  phase = "computerShot";
+  tone(510,.07,"triangle",.06);
+}
+
+function completeDelivery(runs,wicket) {
+  if (pending) return;
+  pending = true;
+
+  const userWasBatting = isUserBatting();
+  const battingTeam = userWasBatting ? playerTeam : opponentTeam;
+
+  if (wicket) {
+    if (userWasBatting) playerWickets++;
+    else opponentWickets++;
+
+    flashText = "WICKET!";
+    flashTimer = 1.15;
+    showMessage("WICKET! The stumps are hit!");
+    cheer("wicket");
+    speak("Wicket! " + battingTeam + " lose a wicket.");
+  } else {
+    if (userWasBatting) playerRuns += runs;
+    else opponentRuns += runs;
+
+    flashText = runs === 0 ? "DOT BALL" : runs + " RUN" + (runs === 1 ? "" : "S");
+    flashTimer = 1.1;
+
+    if (runs === 6) {
+      showMessage("SIX! Into the crowd!");
+      cheer("six");
+      speak("Six! What a shot!");
+    } else if (runs === 4) {
+      showMessage("FOUR! Racing to the boundary!");
+      cheer("four");
+      speak("Four! Beautiful shot!");
+    } else if (runs === 2) {
+      showMessage("They come back for two!");
+      cheer("run");
+    } else if (runs === 1) {
+      showMessage("Quick single!");
+      cheer("run");
+    } else {
+      showMessage("Dot ball. Good bowling.");
+    }
+  }
+
+  ballsThisInnings++;
+  updateHUD();
+
+  setTimeout(() => {
+    ball = null;
+    pending = false;
+
+    const currentScore = userWasBatting ? playerRuns : opponentRuns;
+    const currentWickets = userWasBatting ? playerWickets : opponentWickets;
+
+    if (innings === 1 && currentScore >= target) {
+      finishMatch(userWasBatting ? "player" : "opponent");
+      return;
+    }
+
+    if (ballsThisInnings >= selectedOvers * 6 || currentWickets >= 10) {
+      if (innings === 0) {
+        target = currentScore + 1;
+        inningsBreak();
+      } else {
+        if (playerRuns > opponentRuns) finishMatch("player");
+        else if (opponentRuns > playerRuns) finishMatch("opponent");
+        else finishMatch("tie");
+      }
+      return;
+    }
+
+    if (userWasBatting) {
+      phase = "bat";
+      newBattingBall();
+    } else {
+      phase = "bowl";
+      showMessage("Aim at the stumps and press SPACE.");
+    }
+  },1050);
+}
+
+function inningsBreak() {
+  phase = "break";
+  const firstTeam = userBatsFirst ? playerTeam : opponentTeam;
+  const firstRuns = userBatsFirst ? playerRuns : opponentRuns;
+  const firstWickets = userBatsFirst ? playerWickets : opponentWickets;
+  const secondTeam = userBatsFirst ? opponentTeam : playerTeam;
+
+  $("modalTitle").textContent = "INNINGS BREAK";
+  $("modalText").innerHTML =
+    teams[firstTeam].flag + " <b>" + firstTeam + "</b> scored <b>" +
+    firstRuns + "/" + firstWickets + "</b>.<br><br>" +
+    teams[secondTeam].flag + " <b>" + secondTeam + "</b> need <b>" +
+    target + " runs</b> to win.";
+
+  $("modalMain").textContent = "START NEXT INNINGS";
+  $("modal").classList.remove("hide");
+  $("bowlOptions").classList.add("hide");
+  speak("Innings break. Target is " + target + " runs.");
+}
+
+function finishMatch(winner) {
+  phase = "result";
+  $("bowlOptions").classList.add("hide");
+
+  let title = "";
+  let text = "";
+
+  if (winner === "player") {
+    title = "YOU WIN! 🏆";
+    text = teams[playerTeam].flag + " <b>" + playerTeam + "</b> won the match!";
+    cheer("six");
+    speak(playerTeam + " have won the match!");
+  } else if (winner === "opponent") {
+    title = "MATCH OVER";
+    text = teams[opponentTeam].flag + " <b>" + opponentTeam + "</b> won the match!";
+    cheer("wicket");
+    speak(opponentTeam + " have won the match.");
+  } else {
+    title = "MATCH TIED";
+    text = "Both teams finished on the same score!";
+    speak("The match is tied.");
+  }
+
+  $("modalTitle").textContent = title;
+  $("modalText").innerHTML =
+    text + "<br><br><b>" + teams[playerTeam].short + " " + playerRuns + "/" +
+    playerWickets + "</b> &nbsp; — &nbsp; <b>" + teams[opponentTeam].short + " " +
+    opponentRuns + "/" + opponentWickets + "</b>";
+
+  $("modalMain").textContent = "PLAY AGAIN";
+  $("modal").classList.remove("hide");
+  updateHUD();
+}
+
+function updateHUD() {
+  $("playerScore").textContent = playerRuns + " / " + playerWickets;
+  $("opponentScore").textContent = opponentRuns + " / " + opponentWickets;
+
+  const overs = Math.floor(ballsThisInnings / 6) + "." + (ballsThisInnings % 6);
+  const userBatting = isUserBatting();
+
+  $("inningsText").textContent = userBatting ? "YOUR BATTING" : "YOUR BOWLING";
+
+  if (innings === 1) {
+    const chasingScore = userBatting ? playerRuns : opponentRuns;
+    $("overText").textContent = overs + " overs • Need " + Math.max(0,target - chasingScore) + " runs";
+  } else {
+    $("overText").textContent = overs + " overs • " + selectedOvers + " over match";
+  }
+}
+
+function showMessage(text) {
+  $("message").textContent = text;
+}
+
+window.addEventListener("keydown",event => {
+  if (["ArrowLeft","ArrowRight","Space","Digit1","Digit2","Digit3"].includes(event.code)) {
+    event.preventDefault();
+  }
+
+  keys[event.code] = true;
+
+  if (event.code === "Digit1") selectStyle("swing");
+  if (event.code === "Digit2") selectStyle("yorker");
+  if (event.code === "Digit3") selectStyle("bouncer");
+
+  if (event.code === "Space" && !event.repeat) {
+    if (phase === "bat") hitBall();
+    if (phase === "bowl") bowlBall();
+  }
+});
+
+window.addEventListener("keyup",event => {
+  keys[event.code] = false;
+});
+
+field.addEventListener("pointerdown",event => {
+  const rect = field.getBoundingClientRect();
+  const x = (event.clientX - rect.left) * 1600 / rect.width;
+
+  if (phase === "bat") batX = Math.max(720,Math.min(880,x));
+  if (phase === "bowl") bowlingLine = Math.max(755,Math.min(845,x));
+});
+
+function selectStyle(style) {
+  bowlingStyle = style;
+  document.querySelectorAll(".style").forEach(button => {
+    button.classList.toggle("selected",button.dataset.style === style);
+  });
+}
+
+function buildStaticStadium() {
+  const c = sctx;
+  c.clearRect(0,0,1600,900);
+
+  const sky = c.createLinearGradient(0,0,0,900);
+  sky.addColorStop(0,"#05142e");
+  sky.addColorStop(.34,"#174b75");
+  sky.addColorStop(.35,"#177c51");
+  sky.addColorStop(1,"#075036");
+  c.fillStyle = sky;
+  c.fillRect(0,0,1600,900);
+
+  for (let i = 0; i < 75; i++) {
+    const x = (i * 173) % 1600;
+    const y = 20 + ((i * 61) % 140);
+    c.fillStyle = "#ffffffaa";
+    c.fillRect(x,y,2,2);
+  }
+
+  c.fillStyle = "#162b49";
+  c.fillRect(0,120,1600,185);
+  c.fillStyle = "#0a172c";
+  c.fillRect(0,220,1600,88);
+
+  const crowdColors = ["#ff5f7e","#48dcff","#ffe451","#b67dff","#49eb83","#ffffff"];
+
+  for (let i = 0; i < 160; i++) {
+    const x = (i * 91) % 1600;
+    const y = 165 + ((i * 43) % 110);
+    c.fillStyle = crowdColors[i % crowdColors.length];
+    c.beginPath();
+    c.arc(x,y,4,0,Math.PI * 2);
+    c.fill();
+    c.fillRect(x - 5,y + 5,10,15);
+  }
+
+  for (let i = 0; i < 6; i++) {
+    const x = 95 + i * 280;
+    const glow = c.createRadialGradient(x,75,0,x,75,100);
+    glow.addColorStop(0,"#e4fbffcc");
+    glow.addColorStop(1,"#e4fbff00");
+    c.fillStyle = glow;
+    c.fillRect(x - 100,-30,200,200);
+    c.fillStyle = "#efffff";
+    c.fillRect(x - 7,65,14,76);
+  }
+
+  c.fillStyle = "#0a1d37";
+  c.fillRect(540,105,520,55);
+  c.fillStyle = "#4ceaff";
+  c.font = "bold 22px Arial";
+  c.textAlign = "center";
+  c.fillText(teams[playerTeam].short + "  v  " + teams[opponentTeam].short,800,140);
+
+  c.fillStyle = "#137c4d";
+  c.beginPath();
+  c.ellipse(800,600,745,355,0,0,Math.PI * 2);
+  c.fill();
+
+  c.save();
+  c.beginPath();
+  c.ellipse(800,600,690,320,0,0,Math.PI * 2);
+  c.clip();
+
+  for (let i = 0; i < 13; i++) {
+    c.fillStyle = i % 2 ? "#168c57" : "#1c995e";
+    c.fillRect(0,315 + i * 48,1600,48);
+  }
+  c.restore();
+
+  c.strokeStyle = "#d9ffe099";
+  c.lineWidth = 4;
+  c.beginPath();
+  c.ellipse(800,600,680,310,0,0,Math.PI * 2);
+  c.stroke();
+
+  const pitch = c.createLinearGradient(0,300,0,890);
+  pitch.addColorStop(0,"#ebc87f");
+  pitch.addColorStop(1,"#b87e3f");
+  c.fillStyle = pitch;
+  c.beginPath();
+  c.moveTo(735,295);
+  c.lineTo(865,295);
+  c.lineTo(1015,870);
+  c.lineTo(585,870);
+  c.closePath();
+  c.fill();
+
+  c.strokeStyle = "#fff4d4";
+  c.lineWidth = 4;
+  c.beginPath();
+  c.moveTo(650,720);c.lineTo(950,720);
+  c.moveTo(720,350);c.lineTo(880,350);
+  c.stroke();
+}
+
+function drawStumps(x,y) {
+  ctx.save();
+  ctx.strokeStyle = "#fff1c7";
+  ctx.lineWidth = 7;
+
+  [-13,0,13].forEach(offset => {
+    ctx.beginPath();
+    ctx.moveTo(x + offset,y - 27);
+    ctx.lineTo(x + offset,y + 24);
+    ctx.stroke();
+  });
+
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(x - 20,y - 24);ctx.lineTo(x + 20,y - 24);
+  ctx.moveTo(x - 20,y - 10);ctx.lineTo(x + 20,y - 10);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawCricketer(x,y,kit,label,hasBat,scale=1) {
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.scale(scale,scale);
+
+  ctx.fillStyle = "rgba(0,0,0,.28)";
+  ctx.beginPath();
+  ctx.ellipse(0,28,28,9,0,0,Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = "#061428";
+  ctx.lineWidth = 10;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(-11,-3);ctx.lineTo(-16,26);
+  ctx.moveTo(11,-3);ctx.lineTo(16,26);
+  ctx.stroke();
+
+  ctx.fillStyle = "#eef5ff";
+  ctx.fillRect(-23,23,15,8);
+  ctx.fillRect(8,23,15,8);
+
+  ctx.fillStyle = kit;
+  ctx.fillRect(-20,-42,40,42);
+  ctx.fillStyle = "#ffffff22";
+  ctx.fillRect(-20,-42,40,8);
+
+  ctx.strokeStyle = "#e6ad88";
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.moveTo(-19,-32);ctx.lineTo(-34,-12);
+  ctx.moveTo(19,-32);ctx.lineTo(34,-12);
+  ctx.stroke();
+
+  ctx.fillStyle = "#edb18c";
+  ctx.beginPath();
+  ctx.arc(0,-59,17,0,Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#0b203d";
+  ctx.beginPath();
+  ctx.arc(0,-64,17,Math.PI,Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(-22,-84,44,7);
+
+  if (hasBat) {
+    ctx.strokeStyle = "#f0d291";
+    ctx.lineWidth = 13;
+    ctx.beginPath();
+    ctx.moveTo(33,-13);ctx.lineTo(52,27);
+    ctx.stroke();
+
+    ctx.strokeStyle = "#835327";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(33,-13);ctx.lineTo(52,27);
+    ctx.stroke();
+  }
+
+  if (label) {
+    ctx.fillStyle = "#04142d";
+    ctx.fillRect(-45,38,90,22);
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 13px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(label,0,54);
+  }
+
+  ctx.restore();
+}
+
+function drawFielders(kit) {
+  const positions = [
+    [280,505],[420,390],[1180,390],[1320,505],
+    [205,665],[1395,665],[430,740],[1170,740],
+    [315,610],[1285,610]
+  ];
+
+  positions.forEach((position,index) => {
+    drawCricketer(position[0],position[1],kit,index === 0 ? "FIELDER" : "",false,.83);
+  });
+}
+
+function drawBall() {
+  if (!ball) return;
+
+  ctx.save();
+
+  if (ball.type === "incoming" || ball.type === "bowling") {
+    ctx.strokeStyle = "rgba(255,240,180,.45)";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(ball.x,ball.y - 38);
+    ctx.lineTo(ball.x,ball.y);
+    ctx.stroke();
+  }
+
+  ctx.shadowColor = "#fff5b8";
+  ctx.shadowBlur = 18;
+  ctx.fillStyle = "#e73932";
+  ctx.beginPath();
+  ctx.arc(ball.x,ball.y,11,0,Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(ball.x,ball.y,8,.6,3.6);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawMatch() {
+  ctx.clearRect(0,0,1600,900);
+
+  const userBatting = isUserBatting();
+  const battingKit = teams[userBatting ? playerTeam : opponentTeam].color;
+  const bowlingKit = teams[userBatting ? opponentTeam : playerTeam].color;
+
+  drawFielders(bowlingKit);
+
+  drawStumps(800,340);
+  drawStumps(800,750);
+
+  drawCricketer(900,305,"#f8f1d3","UMPIRE",false,.95);
+  drawCricketer(1260,645,"#f8f1d3","SQUARE LEG",false,.95);
+
+  const batterX = phase === "bat" || phase === "playerShot" ? batX : 800;
+
+  drawCricketer(800,265,bowlingKit,userBatting ? "OPPONENT" : "YOU",false,1.08);
+  drawCricketer(batterX,700,battingKit,userBatting ? "YOU" : "OPPONENT",true,1.2);
+  drawCricketer(batterX,835,bowlingKit,"KEEPER",false,.98);
+
+  if (phase === "bowl") {
+    ctx.save();
+    ctx.strokeStyle = "#54efff";
+    ctx.lineWidth = 4;
+    ctx.setLineDash([10,8]);
+    ctx.beginPath();
+    ctx.moveTo(bowlingLine,360);
+    ctx.lineTo(bowlingLine,720);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  drawBall();
+
+  if (flashTimer > 0) {
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.font = "bold 58px Arial";
+    ctx.strokeStyle = "#06142c";
+    ctx.lineWidth = 10;
+    ctx.strokeText(flashText,800,510);
+    ctx.fillStyle = "#fff";
+    ctx.fillText(flashText,800,510);
+    ctx.restore();
+  }
+}
+
+function updateStraightBall(dt) {
+  ball.progress += dt * ball.speed;
+  const p = Math.min(1,ball.progress);
+
+  ball.x = ball.startX + (ball.endX - ball.startX) * p + Math.sin(p * Math.PI) * ball.curve;
+  ball.y = 355 + (ball.endY - 355) * p;
+
+  if (p >= 1) {
+    if (ball.type === "incoming") completeDelivery(0,Math.random() < .10);
+    if (ball.type === "bowling") computerHitBall();
+  }
+}
+
+function updateShotBall(dt) {
+  ball.time += dt;
+  ball.x += ball.vx * dt;
+  ball.y += ball.vy * dt;
+  ball.vy += ball.gravity * dt;
+
+  if (ball.time > 1.18 || ball.y > 900 || ball.x < -60 || ball.x > 1660) {
+    completeDelivery(ball.runs,ball.wicket);
+  }
+}
+
+let lastTime = performance.now();
+
+function gameLoop(time) {
+  const dt = Math.min(.035,(time - lastTime) / 1000);
+  lastTime = time;
+
+  if (phase === "bat" && !pending) {
+    if (keys.ArrowLeft) batX = Math.max(720,batX - 320 * dt);
+    if (keys.ArrowRight) batX = Math.min(880,batX + 320 * dt);
+    if (ball && ball.type === "incoming") updateStraightBall(dt);
+  }
+
+  if (phase === "bowl" && !pending) {
+    if (keys.ArrowLeft) bowlingLine = Math.max(755,bowlingLine - 160 * dt);
+    if (keys.ArrowRight) bowlingLine = Math.min(845,bowlingLine + 160 * dt);
+    if (ball && ball.type === "bowling") updateStraightBall(dt);
+  }
+
+  if ((phase === "playerShot" || phase === "computerShot") && ball && !pending) {
+    updateShotBall(dt);
+  }
+
+  if (flashTimer > 0) flashTimer -= dt;
+
+  if (!["setup","toss"].includes(phase)) drawMatch();
+  requestAnimationFrame(gameLoop);
+}
+
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
