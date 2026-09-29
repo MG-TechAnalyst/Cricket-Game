@@ -1,4 +1,4 @@
-# My AI Workspace (Code a simple and fun cricket game. Output as single-file HTML, JS, CSS.)
+# My AI Workspace
 
 A small home for the AI tools, personas, and notes I am building.
 
